@@ -11,7 +11,7 @@ import (
 
 	"github.com/ztcjoe93/ucd/configurations"
 	"github.com/ztcjoe93/ucd/records"
-	"github.com/ztcjoe93/ucd/utilities"
+	util "github.com/ztcjoe93/ucd/utilities"
 )
 
 var (
@@ -63,12 +63,12 @@ func main() {
 
 	if helpFlag {
 		flag.PrintDefaults()
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	if versionFlag {
 		log.Printf("%v v%v\n", APPLICATION_NAME, APPLICATION_VERSION)
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	configs = configs.GetConfigurations()
@@ -98,7 +98,7 @@ func main() {
 		}
 		output, _ := json.Marshal(r)
 		os.WriteFile(cachePath, output, 0644)
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	if clearStashFlag {
@@ -108,23 +108,23 @@ func main() {
 		}
 		output, _ := json.Marshal(r)
 		os.WriteFile(cachePath, output, 0644)
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	// exit earlier depending on flag passed in
 	if listFlag {
 		r.ListRecords("path", configs.MaxMRUDisplay)
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	if listStashFlag {
 		r.ListRecords("stash", configs.MaxMRUDisplay)
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	if len(args) > 1 {
-		log.Printf("Only < 1 arguments, found %v args can be passed to ucd\n", len(args))
-		utilities.ReturnCwd()
+		util.Clog("No arguments passed in to cd")
+		util.ReturnCwd()
 	}
 
 	if modifyAliasFlag > 0 {
@@ -137,7 +137,7 @@ func main() {
 		os.WriteFile(cachePath, output, 0644)
 
 		r.ListRecords("stash", configs.MaxMRUDisplay)
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	// fmt.Print sends output to stdout, this will be consumed by builtin `cd` command
@@ -145,7 +145,7 @@ func main() {
 	var targetPath string
 
 	if dynamicSwapFlag > 0 {
-		targetPath = utilities.DynamicPathSwap(args[0], dynamicSwapFlag)
+		targetPath = util.DynamicPathSwap(args[0], dynamicSwapFlag)
 	} else if aliasPathFlag != "" {
 		found := false
 		for key, rec := range r.StashRecords {
@@ -157,14 +157,14 @@ func main() {
 		}
 
 		if !found {
-			log.Printf("unable to cd -- alias ``%v` not found\n", aliasPathFlag)
-			utilities.ReturnCwd()
+			util.Clog(fmt.Sprintf("Alias %v not found", aliasPathFlag))
+			util.ReturnCwd()
 		}
 	} else if historyPathFlag > 0 {
 		mruRecords := records.SortRecords(r.PathRecords)
 		if historyPathFlag-1 > len(mruRecords)-1 {
-			log.Printf("invalid #, there are only %v records\n", len(mruRecords))
-			utilities.ReturnCwd()
+			util.Clog(fmt.Sprintf("Invalid path # provided - there are %v records", len(mruRecords)))
+			util.ReturnCwd()
 		}
 		targetPath = mruRecords[historyPathFlag-1]
 	} else if stashPathFlag > 0 {
@@ -172,7 +172,7 @@ func main() {
 		targetPath = stashRecords[stashPathFlag-1]
 	} else {
 		if len(args) > 0 {
-			targetPath = utilities.Repeat(args[0], numRepeatFlag)
+			targetPath = util.Repeat(args[0], numRepeatFlag)
 		} else {
 			targetPath = homeDir
 		}
@@ -183,11 +183,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	if utilities.IsInvalidPath(targetPath) {
+	if util.IsInvalidPath(targetPath) {
 		if configs.FileFallbackBehavior {
-			targetPath = utilities.GetParentDir(targetPath)
+			targetPath = util.GetParentDir(targetPath)
 		} else {
-			utilities.ReturnCwd()
+			util.ReturnCwd()
 		}
 	} else {
 		targetPath, _ = os.Getwd()
@@ -195,24 +195,27 @@ func main() {
 
 	rec, ok := r.PathRecords[targetPath]
 	if ok {
-		rec.Timestamp = utilities.TimeNow()
+		rec.Timestamp = util.TimeNow()
 		r.PathRecords[targetPath] = rec
 	} else {
-		r.PathRecords[targetPath] = records.PathRecord{Timestamp: utilities.TimeNow()}
+		r.PathRecords[targetPath] = records.PathRecord{Timestamp: util.TimeNow()}
 	}
 
 	if stashFlag {
 		if r.AliasExists(aliasFlag) {
-			log.Printf("Alias `%v` already exists\n", aliasFlag)
-			utilities.ReturnCwd()
+			util.Clog(fmt.Sprintf("Alias `%v` already exists\n", aliasFlag))
+			util.ReturnCwd()
 		}
-		r.StashRecords[targetPath] = records.StashRecord{Alias: aliasFlag, Timestamp: utilities.TimeNow()}
+		r.StashRecords[targetPath] = records.StashRecord{Alias: aliasFlag, Timestamp: util.TimeNow()}
 	}
 
-	utilities.AutoClear(&r, configs.MaxMRUDisplay)
+	util.AutoClear(&r, configs.MaxMRUDisplay)
 	strings.Replace(targetPath, " ", "\\ ", -1)
 	fmt.Print(targetPath)
 
 	output, _ := json.Marshal(r)
-	os.WriteFile(cachePath, output, 0644)
+	err = os.WriteFile(cachePath, output, 0644)
+	if err != nil {
+		fmt.Printf("failed to write - %v\n", err)
+	}
 }
