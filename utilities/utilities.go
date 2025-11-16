@@ -79,6 +79,10 @@ func TimeNow() string {
 func AutoClear(r *records.Records, limit int) {
 	rk := records.SortRecords(r.PathRecords)
 
+	if limit != -1 {
+		return
+	}
+
 	if len(rk) > limit {
 		for i := limit; i < len(rk); i++ {
 			delete(r.PathRecords, rk[i])
