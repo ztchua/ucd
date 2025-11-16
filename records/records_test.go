@@ -21,10 +21,10 @@ func TestRecordHasCorrectCount(t *testing.T) {
 
 func TestSortPathRecords(t *testing.T) {
 	pr := map[string]PathRecord{
-		"path1": PathRecord{Timestamp: "1990-01-01 00:00:01 +08", Count: 42},
-		"path2": PathRecord{Timestamp: "1991-01-01 00:00:01 +08", Count: 69},
-		"path3": PathRecord{Timestamp: "2024-04-01 12:34:12 +08", Count: 4},
-		"path4": PathRecord{Timestamp: "2016-02-23 22:10:10 +08", Count: 12},
+		"path1": PathRecord{Timestamp: "1990-01-01 00:00:01 +08"},
+		"path2": PathRecord{Timestamp: "1991-01-01 00:00:01 +08"},
+		"path3": PathRecord{Timestamp: "2024-04-01 12:34:12 +08"},
+		"path4": PathRecord{Timestamp: "2016-02-23 22:10:10 +08"},
 	}
 
 	records := SortRecords(pr)

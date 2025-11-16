@@ -19,7 +19,6 @@ type Records struct {
 }
 
 type PathRecord struct {
-	Count     int    `json:"count"`
 	Timestamp string `json:"ts"`
 }
 
@@ -56,7 +55,7 @@ func (r Records) ListRecords(recType string, maxLimit int) {
 	t.SetOutputMirror(log.Writer())
 
 	if isPath {
-		t.AppendHeader(table.Row{"#", "path", "count", "timestamp"})
+		t.AppendHeader(table.Row{"#", "path", "timestamp"})
 	} else {
 		t.AppendHeader(table.Row{"#", "alias", "path", "timestamp"})
 	}
@@ -77,7 +76,7 @@ func (r Records) ListRecords(recType string, maxLimit int) {
 	for i := 0; i < displayLimit; i++ {
 		if isPath {
 			t.AppendRow([]interface{}{
-				i + 1, keys[i], r.PathRecords[keys[i]].Count, r.PathRecords[keys[i]].Timestamp,
+				i + 1, keys[i], r.PathRecords[keys[i]].Timestamp,
 			})
 		} else {
 			t.AppendRow([]interface{}{
