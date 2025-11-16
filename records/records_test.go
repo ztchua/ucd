@@ -21,10 +21,10 @@ func TestRecordHasCorrectCount(t *testing.T) {
 
 func TestSortPathRecords(t *testing.T) {
 	pr := map[string]PathRecord{
-		"path1": PathRecord{Timestamp: "1990-01-01 00:00:01 +08"},
-		"path2": PathRecord{Timestamp: "1991-01-01 00:00:01 +08"},
-		"path3": PathRecord{Timestamp: "2024-04-01 12:34:12 +08"},
-		"path4": PathRecord{Timestamp: "2016-02-23 22:10:10 +08"},
+		"path1": {Timestamp: "1990-01-01 00:00:01 +08"},
+		"path2": {Timestamp: "1991-01-01 00:00:01 +08"},
+		"path3": {Timestamp: "2024-04-01 12:34:12 +08"},
+		"path4": {Timestamp: "2016-02-23 22:10:10 +08"},
 	}
 
 	records := SortRecords(pr)
@@ -48,10 +48,10 @@ func TestSortPathRecords(t *testing.T) {
 
 func TestSortStashRecords(t *testing.T) {
 	pr := map[string]StashRecord{
-		"path1": StashRecord{Timestamp: "1990-01-01 00:00:01 +08", Alias: "apple"},
-		"path2": StashRecord{Timestamp: "1991-01-01 00:00:01 +08", Alias: "banana"},
-		"path3": StashRecord{Timestamp: "2024-04-01 12:34:12 +08", Alias: "pear"},
-		"path4": StashRecord{Timestamp: "2016-02-23 22:10:10 +08", Alias: "orange"},
+		"path1": {Timestamp: "1990-01-01 00:00:01 +08", Alias: "apple"},
+		"path2": {Timestamp: "1991-01-01 00:00:01 +08", Alias: "banana"},
+		"path3": {Timestamp: "2024-04-01 12:34:12 +08", Alias: "pear"},
+		"path4": {Timestamp: "2016-02-23 22:10:10 +08", Alias: "orange"},
 	}
 
 	records := SortRecords(pr)
@@ -77,8 +77,8 @@ func TestAliasExists(t *testing.T) {
 	r := Records{
 		PathRecords: map[string]PathRecord{},
 		StashRecords: map[string]StashRecord{
-			"path1": StashRecord{Timestamp: "1991-01-01 01:01:01 +08", Alias: "ape"},
-			"path2": StashRecord{Timestamp: "1991-01-01 01:01:01 +08", Alias: "bear"},
+			"path1": {Timestamp: "1991-01-01 01:01:01 +08", Alias: "ape"},
+			"path2": {Timestamp: "1991-01-01 01:01:01 +08", Alias: "bear"},
 		},
 	}
 
