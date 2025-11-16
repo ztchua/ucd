@@ -21,7 +21,6 @@ var (
 	clearFlag       bool
 	clearStashFlag  bool
 	dynamicSwapFlag int
-	numRepeatFlag   int
 	listFlag        bool
 	listStashFlag   bool
 	historyPathFlag int
@@ -51,7 +50,6 @@ func main() {
 	flag.BoolVar(&listFlag, "l", false, "display Most Recently Used (MRU) list of paths chdir-ed into")
 	flag.BoolVar(&listStashFlag, "ls", false, "display list of stashed cd commands")
 	flag.IntVar(&modifyAliasFlag, "ma", 0, "modify alias of indicated # from the stash list")
-	flag.IntVar(&numRepeatFlag, "n", 1, "no. of times to execute chdir")
 	flag.IntVar(&historyPathFlag, "p", 0, "chdir to the indicated # from the MRU list")
 	flag.IntVar(&stashPathFlag, "ps", 0, "chdir to the indicated # from the stash list")
 	flag.StringVar(&aliasPathFlag, "pa", "", "chdir to path with matching alias from stash list")
@@ -171,11 +169,7 @@ func main() {
 		stashRecords := records.SortRecords(r.StashRecords)
 		targetPath = stashRecords[stashPathFlag-1]
 	} else {
-		if len(args) > 0 {
-			targetPath = util.Repeat(args[0], numRepeatFlag)
-		} else {
-			targetPath = homeDir
-		}
+		targetPath = homeDir
 	}
 
 	if targetPath == "-" {
