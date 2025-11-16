@@ -214,8 +214,5 @@ func main() {
 	fmt.Print(targetPath)
 
 	output, _ := json.Marshal(r)
-	err = os.WriteFile(cachePath, output, 0644)
-	if err != nil {
-		fmt.Printf("failed to write - %v\n", err)
-	}
+	os.WriteFile(cachePath, output, 0644)
 }
