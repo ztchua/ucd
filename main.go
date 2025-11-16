@@ -33,9 +33,11 @@ var (
 	cachePath       string
 	cacheFile       *os.File
 
-	invalidPath bool   = false
-	version     string = "ucd v0.1.1"
+	invalidPath bool = false
 )
+
+const APPLICATION_NAME string = "ucd"
+const APPLICATION_VERSION string = "1.0.0"
 
 func main() {
 	log.SetFlags(0)
@@ -65,7 +67,7 @@ func main() {
 	}
 
 	if versionFlag {
-		log.Printf("%v\n", version)
+		log.Printf("%v v%v\n", APPLICATION_NAME, APPLICATION_VERSION)
 		utilities.ReturnCwd()
 	}
 
@@ -193,11 +195,10 @@ func main() {
 
 	rec, ok := r.PathRecords[targetPath]
 	if ok {
-		rec.Count++
 		rec.Timestamp = utilities.TimeNow()
 		r.PathRecords[targetPath] = rec
 	} else {
-		r.PathRecords[targetPath] = records.PathRecord{Count: 1, Timestamp: utilities.TimeNow()}
+		r.PathRecords[targetPath] = records.PathRecord{Timestamp: utilities.TimeNow()}
 	}
 
 	if stashFlag {
