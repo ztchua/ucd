@@ -1,15 +1,17 @@
-name: go-tests
-
-on: workflow_dispatch
+name: Run regresion tests
+on:
+  push:
+    branches: ['main']
+  workflow_dispatch:
+  pull_request: 
+    types: [opened, synchronize, reopened]
 
 jobs:
-  test:
+  regression-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
       - uses: actions/setup-go@v3
         with:
           go-version: 1.21.1
-
       - run: go mod download && go test -v ./...
