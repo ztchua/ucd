@@ -160,7 +160,7 @@ func main() {
 		}
 	}
 
-	util.Clog(fmt.Sprintf("targetPath: %v", targetPath))
+	util.Clog(fmt.Sprintf("chdir to %v", targetPath))
 
 	if targetPath == "-" {
 		fmt.Print("-")
