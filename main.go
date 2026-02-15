@@ -29,8 +29,6 @@ var (
 	versionFlag     bool
 	cachePath       string
 	cacheFile       *os.File
-
-	invalidPath bool = false
 )
 
 const APPLICATION_NAME string = "ucd"
@@ -54,6 +52,7 @@ func main() {
 	flag.StringVar(&aliasPathFlag, "pa", "", "Chdir to path with the provided alias from stash list")
 
 	flag.BoolVar(&stashFlag, "s", false, "stash cd path into a separate list")
+	flag.IntVar(&stashPathFlag, "ps", 0, "Chdir to the # path from stash list")
 	flag.Parse()
 
 	args := flag.Args()
@@ -173,8 +172,6 @@ func main() {
 		} else {
 			util.ReturnCwd()
 		}
-	} else {
-		targetPath, _ = os.Getwd()
 	}
 
 	rec, ok := r.PathRecords[targetPath]
@@ -207,7 +204,7 @@ func main() {
 	}
 
 	util.AutoClear(&r, configs.MaxMRUDisplay)
-	strings.Replace(targetPath, " ", "\\ ", -1)
+	targetPath = strings.Replace(targetPath, " ", "\\ ", -1)
 	fmt.Print(targetPath)
 
 	output, _ := json.Marshal(r)

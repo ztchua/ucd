@@ -32,14 +32,11 @@ function cd() { builtin cd $(ucd $@) }
 | -a | string |  | alias for stashed path, used in conjunction with -s |
 | -c | bool | false | clear history list |
 | -cs | bool | false | clear stash list |
-| -d | int | 0 | swap directory at -d parent directories |
 | -l | - | - | display Most Recently Used (MRU) list of paths chdir-ed into |
 | -ls | - | - | display list of stashed cd commands |
-| -ma | int | 0 | modify alias of indicated # from the stash list |
 | -p | int | 0 | chdir to the indicated # from MRU list |
-| -ps | int | 0 | chdir to the indicated # from stash list |
 | -pa | string |  | chdir to path with matching alias from stash list |
-| -n | int | 1 | no. of times to execute chdir |
+| -ps | int | 0 | chdir to the indicated # from stash list |
 | -s | bool | false | stash cd path into a separate list |
 
 ## Configuration
