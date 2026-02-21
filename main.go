@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/ztcjoe93/ucd/configurations"
@@ -155,7 +156,12 @@ func main() {
 	} else {
 		targetPath = homeDir
 		if len(args) > 0 {
-			targetPath = args[0]
+			var err error
+			targetPath, err = filepath.Abs(args[0])
+			if err != nil {
+				util.Clog(fmt.Sprintf("Error resolving path: %v", err))
+				util.ReturnCwd()
+			}
 		}
 	}
 
