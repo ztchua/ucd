@@ -20,7 +20,7 @@ Append the following to your specific shell [runcom](https://en.wikipedia.org/wi
 
 Example for .zshrc  
 ```shell
-function cd() { builtin cd $(ucd $@) }
+function cd() { builtin cd "$(ucd "$@")" }
 ```
 
 ## Usage

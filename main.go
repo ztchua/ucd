@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/ztcjoe93/ucd/configurations"
 	"github.com/ztcjoe93/ucd/records"
@@ -210,7 +209,6 @@ func main() {
 	}
 
 	util.AutoClear(&r, configs.MaxMRUDisplay)
-	targetPath = strings.Replace(targetPath, " ", "\\ ", -1)
 	fmt.Print(targetPath)
 
 	output, _ := json.Marshal(r)
