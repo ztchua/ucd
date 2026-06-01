@@ -7,11 +7,11 @@ import (
 	"io"
 	"log"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/ztcjoe93/ucd/configurations"
 	"github.com/ztcjoe93/ucd/records"
-	"github.com/ztcjoe93/ucd/utilities"
+	util "github.com/ztcjoe93/ucd/utilities"
 )
 
 var (
@@ -20,40 +20,39 @@ var (
 	helpFlag        bool
 	clearFlag       bool
 	clearStashFlag  bool
-	dynamicSwapFlag int
-	numRepeatFlag   int
 	listFlag        bool
 	listStashFlag   bool
 	historyPathFlag int
 	aliasPathFlag   string
-	modifyAliasFlag int
-	stashPathFlag   int
 	stashFlag       bool
+	stashPathFlag   int
 	versionFlag     bool
 	cachePath       string
 	cacheFile       *os.File
-
-	invalidPath bool   = false
-	version     string = "ucd v0.1.1"
 )
+
+const APPLICATION_NAME string = "ucd"
+const APPLICATION_VERSION string = "1.0.0"
 
 func main() {
 	log.SetFlags(0)
 	// flags
 	flag.BoolVar(&helpFlag, "h", false, "display help")
-	flag.StringVar(&aliasFlag, "a", "", "alias for stashed path, used in conjunction with -s")
 	flag.BoolVar(&versionFlag, "v", false, "display ucd version")
-	flag.BoolVar(&clearFlag, "c", false, "clear history list")
-	flag.BoolVar(&clearStashFlag, "cs", false, "clear stash list")
-	flag.IntVar(&dynamicSwapFlag, "d", 0, "swap out directory to arg after -d parent directories")
-	flag.BoolVar(&listFlag, "l", false, "display Most Recently Used (MRU) list of paths chdir-ed into")
-	flag.BoolVar(&listStashFlag, "ls", false, "display list of stashed cd commands")
-	flag.IntVar(&modifyAliasFlag, "ma", 0, "modify alias of indicated # from the stash list")
-	flag.IntVar(&numRepeatFlag, "n", 1, "no. of times to execute chdir")
-	flag.IntVar(&historyPathFlag, "p", 0, "chdir to the indicated # from the MRU list")
-	flag.IntVar(&stashPathFlag, "ps", 0, "chdir to the indicated # from the stash list")
-	flag.StringVar(&aliasPathFlag, "pa", "", "chdir to path with matching alias from stash list")
+
+	flag.BoolVar(&listFlag, "l", false, "List history of cd paths")
+	flag.BoolVar(&listStashFlag, "ls", false, "List history of stashed aliases")
+
+	flag.BoolVar(&clearFlag, "c", false, "Clear history list")
+	flag.BoolVar(&clearStashFlag, "cs", false, "Clear stash history list")
+
+	flag.StringVar(&aliasFlag, "a", "", "alias for stashed path, used in conjunction with -s")
+
+	flag.IntVar(&historyPathFlag, "p", 0, "Chdir to the # path from the list")
+	flag.StringVar(&aliasPathFlag, "pa", "", "Chdir to path with the provided alias from stash list")
+
 	flag.BoolVar(&stashFlag, "s", false, "stash cd path into a separate list")
+	flag.IntVar(&stashPathFlag, "ps", 0, "Chdir to the # path from stash list")
 	flag.Parse()
 
 	args := flag.Args()
@@ -61,12 +60,12 @@ func main() {
 
 	if helpFlag {
 		flag.PrintDefaults()
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	if versionFlag {
-		log.Printf("%v\n", version)
-		utilities.ReturnCwd()
+		log.Printf("%v v%v\n", APPLICATION_NAME, APPLICATION_VERSION)
+		util.ReturnCwd()
 	}
 
 	configs = configs.GetConfigurations()
@@ -96,7 +95,7 @@ func main() {
 		}
 		output, _ := json.Marshal(r)
 		os.WriteFile(cachePath, output, 0644)
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	if clearStashFlag {
@@ -106,45 +105,30 @@ func main() {
 		}
 		output, _ := json.Marshal(r)
 		os.WriteFile(cachePath, output, 0644)
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	// exit earlier depending on flag passed in
 	if listFlag {
 		r.ListRecords("path", configs.MaxMRUDisplay)
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	if listStashFlag {
 		r.ListRecords("stash", configs.MaxMRUDisplay)
-		utilities.ReturnCwd()
+		util.ReturnCwd()
 	}
 
 	if len(args) > 1 {
-		log.Printf("Only < 1 arguments, found %v args can be passed to ucd\n", len(args))
-		utilities.ReturnCwd()
-	}
-
-	if modifyAliasFlag > 0 {
-		srk := records.SortRecords(r.StashRecords)
-		sr := r.StashRecords[srk[modifyAliasFlag-1]]
-		sr.Alias = args[0]
-		r.StashRecords[srk[modifyAliasFlag-1]] = sr
-
-		output, _ := json.Marshal(r)
-		os.WriteFile(cachePath, output, 0644)
-
-		r.ListRecords("stash", configs.MaxMRUDisplay)
-		utilities.ReturnCwd()
+		util.Clog("Only 1 argument is accepted")
+		util.ReturnCwd()
 	}
 
 	// fmt.Print sends output to stdout, this will be consumed by builtin `cd` command
 
 	var targetPath string
 
-	if dynamicSwapFlag > 0 {
-		targetPath = utilities.DynamicPathSwap(args[0], dynamicSwapFlag)
-	} else if aliasPathFlag != "" {
+	if aliasPathFlag != "" {
 		found := false
 		for key, rec := range r.StashRecords {
 			if rec.Alias == aliasPathFlag {
@@ -155,61 +139,76 @@ func main() {
 		}
 
 		if !found {
-			log.Printf("unable to cd -- alias ``%v` not found\n", aliasPathFlag)
-			utilities.ReturnCwd()
+			util.Clog(fmt.Sprintf("Alias %v not found", aliasPathFlag))
+			util.ReturnCwd()
 		}
 	} else if historyPathFlag > 0 {
 		mruRecords := records.SortRecords(r.PathRecords)
 		if historyPathFlag-1 > len(mruRecords)-1 {
-			log.Printf("invalid #, there are only %v records\n", len(mruRecords))
-			utilities.ReturnCwd()
+			util.Clog(fmt.Sprintf("Invalid path # provided - there are %v records", len(mruRecords)))
+			util.ReturnCwd()
 		}
 		targetPath = mruRecords[historyPathFlag-1]
 	} else if stashPathFlag > 0 {
 		stashRecords := records.SortRecords(r.StashRecords)
 		targetPath = stashRecords[stashPathFlag-1]
 	} else {
+		targetPath = homeDir
 		if len(args) > 0 {
-			targetPath = utilities.Repeat(args[0], numRepeatFlag)
-		} else {
-			targetPath = homeDir
+			var err error
+			targetPath, err = filepath.Abs(args[0])
+			if err != nil {
+				util.Clog(fmt.Sprintf("Error resolving path: %v", err))
+				util.ReturnCwd()
+			}
 		}
 	}
+
+	util.Clog(fmt.Sprintf("chdir to %v", targetPath))
 
 	if targetPath == "-" {
 		fmt.Print("-")
 		os.Exit(0)
 	}
 
-	if utilities.IsInvalidPath(targetPath) {
+	if util.IsInvalidPath(targetPath) {
 		if configs.FileFallbackBehavior {
-			targetPath = utilities.GetParentDir(targetPath)
+			targetPath = util.GetParentDir(targetPath)
 		} else {
-			utilities.ReturnCwd()
+			util.ReturnCwd()
 		}
-	} else {
-		targetPath, _ = os.Getwd()
 	}
 
 	rec, ok := r.PathRecords[targetPath]
 	if ok {
-		rec.Count++
-		rec.Timestamp = utilities.TimeNow()
+		rec.Timestamp = util.TimeNow()
 		r.PathRecords[targetPath] = rec
 	} else {
-		r.PathRecords[targetPath] = records.PathRecord{Count: 1, Timestamp: utilities.TimeNow()}
+		r.PathRecords[targetPath] = records.PathRecord{Timestamp: util.TimeNow()}
 	}
 
 	if stashFlag {
 		if r.AliasExists(aliasFlag) {
-			log.Printf("Alias `%v` already exists\n", aliasFlag)
-			utilities.ReturnCwd()
+			util.Clog(fmt.Sprintf("Alias `%v` already exists\n", aliasFlag))
+			util.ReturnCwd()
+		} else {
+			log.Printf("Enter an alias for %v:", targetPath)
+
+			_, err := fmt.Scanln(&aliasFlag)
+			if err != nil {
+				log.Fatalf("%v\n", err)
+			}
+
+			log.Printf("Stashed %v as `%v`\n", targetPath, aliasFlag)
+
+			if aliasFlag != "" {
+				r.StashRecords[targetPath] = records.StashRecord{Alias: aliasFlag, Timestamp: util.TimeNow()}
+			}
 		}
-		r.StashRecords[targetPath] = records.StashRecord{Alias: aliasFlag, Timestamp: utilities.TimeNow()}
+		r.StashRecords[targetPath] = records.StashRecord{Alias: aliasFlag, Timestamp: util.TimeNow()}
 	}
 
-	utilities.AutoClear(&r, configs.MaxMRUDisplay)
-	strings.Replace(targetPath, " ", "\\ ", -1)
+	util.AutoClear(&r, configs.MaxMRUDisplay)
 	fmt.Print(targetPath)
 
 	output, _ := json.Marshal(r)

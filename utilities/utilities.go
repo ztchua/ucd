@@ -42,7 +42,7 @@ func prependStrSlice(x []string, y string) []string {
 func IsInvalidPath(targetPath string) bool {
 	err := os.Chdir(targetPath)
 	if err != nil {
-		log.Printf("path `%v` is not a valid path\n", targetPath)
+		Clog(fmt.Sprintf("%v is not a valid path", targetPath))
 		return true
 	}
 
@@ -53,13 +53,13 @@ func GetParentDir(targetPath string) string {
 	parentPath := filepath.Dir(targetPath)
 	err := os.Chdir(parentPath)
 	if err != nil {
-		log.Printf("path `%v` is not a valid path\n", targetPath)
+		Clog(fmt.Sprintf("%v is not a valid path", targetPath))
 		os.Exit(0)
 	}
 
-	// allow fallback to cwd if invalid path is provided
+	// fallback to current working directory (which is parent directory of target file)
 	parentPath, _ = os.Getwd()
-	log.Printf("Falling back to parent directory %v\n", parentPath)
+	Clog(fmt.Sprintf("Falling back to parent directory %v", parentPath))
 	return parentPath
 }
 
@@ -79,9 +79,17 @@ func TimeNow() string {
 func AutoClear(r *records.Records, limit int) {
 	rk := records.SortRecords(r.PathRecords)
 
+	if limit != -1 {
+		return
+	}
+
 	if len(rk) > limit {
 		for i := limit; i < len(rk); i++ {
 			delete(r.PathRecords, rk[i])
 		}
 	}
+}
+
+func Clog(msg string) {
+	log.Printf("[ucd] %v\n", msg)
 }
